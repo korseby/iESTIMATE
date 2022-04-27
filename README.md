@@ -5,7 +5,7 @@ Version: 0.1
 
 ## Use-cases
 The iESTIMATE framework has been developed to be applied to eco-metabolomics studies to answer a wide range of research questions. The following use-cases demonstrate the power of the framework:
-- Impact of hormone treatments on the metabolome of Radula complanata
+- [Impact of hormone treatments on the metabolome of Radula complanata](https://github.com/ipb-halle/iESTIMATE/blob/main/use-cases/radula-hormones/README.md)
 
 ## TODO
 - modularize
