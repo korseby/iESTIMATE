@@ -151,9 +151,9 @@ f.performance_measures_caret <- function(model, sel_factor, sel_colors) {
 	
 	# Multi-class classification metrics
 	sel_pred <- as.factor(sel_pred)
-	#levels(sel_pred) <- levels(sel_obs)
+	levels(sel_pred) <- levels(sel_obs)
 	model_metrics <- mltest::ml_test(predicted=sel_pred, true=sel_obs)
-	
+
 	# Multi-class Classification rate (= 1 - error rate)
 	mcr <- f.classification_rate(sel_factor=sel_obs, predicted=sel_pred)
 	
@@ -406,9 +406,6 @@ f.select_features_elastic_net <- function(feat_matrix, sel_factor, sel_colors, c
 
 # ---------- PLS ----------
 f.select_features_pls <- function(feat_matrix, sel_factor, sel_colors, components=2, tune_length=10, quantile_threshold=0.95, plot_roc_filename=NULL) {
-	# Make factors readible by R
-	sel_factor <- as.factor(make.names(sel_factor))
-	
 	# Handle plotting
 	if (is.null(plot_roc_filename)) {
 		pdf(file=NULL)
@@ -449,9 +446,6 @@ f.select_features_pls <- function(feat_matrix, sel_factor, sel_colors, component
 
 # ---------- sPLS ----------
 f.select_features_spls <- function(feat_matrix, sel_factor, sel_colors, mode="classic", tune_components=2, sel_components=c(1,2), folds_number=10, keepx=c(100,50,25), plot=FALSE, plot_roc_filename=NULL) {
-	# Make factors readible by R
-	sel_factor <- as.factor(make.names(sel_factor))
-	
 	# Set plot off
 	if (plot == FALSE) pdf(file=NULL)
 	
@@ -670,9 +664,6 @@ f.select_features_spls <- function(feat_matrix, sel_factor, sel_colors, mode="cl
 
 # ---------- sPLS-DA ----------
 f.select_features_splsda <- function(feat_matrix, sel_factor, sel_colors, tune_components=2, sel_components=c(1,2), folds_number=10, keepx=c(100,50,25), plot=FALSE, plot_roc_filename=NULL) {
-	# Make factors readible by R
-	sel_factor <- as.factor(make.names(sel_factor))
-	
 	# Set plot off
 	if (plot == FALSE) pdf(file=NULL)
 	
@@ -752,7 +743,7 @@ f.select_features_splsda <- function(feat_matrix, sel_factor, sel_colors, tune_c
 	
 	# Create classification objects
 	#sel_obs <- NULL; for (i in which(((model_pred[,c((nlevels(sel_levels)+1):ncol(model_pred))] * (model_pred[,c(1:(nlevels(sel_levels)))]==1)) > 0))) sel_obs <- c(sel_obs, gsub(x=names(unlist(model_pred[,c(1:(nlevels(sel_levels)))]))[i], pattern='_.*', replacement=''))
-	sel_obs <- gsub(x=rownames(model_pred), pattern='\\.\\d.*', replacement='')
+	sel_obs <- gsub(x=rownames(model_pred), pattern='\\..*', replacement='')
 	sel_prob <- model_pred[,c((nlevels(sel_levels)+1):ncol(model_pred))][((model_pred[,c((nlevels(sel_levels)+1):ncol(model_pred))] * (model_pred[,c(1:(nlevels(sel_levels)))]==1)) > 0)]
 	#sel_pred <- NULL; for (i in c(1:dim(tune_psplsda$class$max.dist)[2])) { sel_pred <- c(sel_pred, as.character(sel_levels[as.numeric(apply(X=tune_psplsda$class$max.dist[,i,], MARGIN=1, FUN=function(x) { names(which.max(table(x))) }))])) }
 	#sel_pred <- NULL; for (i in c(1:dim(tune_splsda$class$max.dist)[2])) { sel_pred <- c(sel_pred, as.character(tune_splsda$class$max.dist[,i,dim(tune_splsda$class$max.dist)[3]])) }
@@ -776,9 +767,6 @@ f.select_features_splsda <- function(feat_matrix, sel_factor, sel_colors, tune_c
 
 # ---------- PLS-DA ----------
 f.select_features_plsda <- function(feat_matrix, sel_factor, sel_colors, tune_components=2, sel_components=c(1,2), folds_number=10, dist.method=c("euclidean","euclidean"), clust.method=c("complete","ward"), plot=FALSE, plot_roc_filename=NULL) {
-	# Make factors readible by R
-	sel_factor <- as.factor(make.names(sel_factor))
-	
 	# Set plot off
 	if (plot == FALSE) pdf(file=NULL)
 	
@@ -882,9 +870,6 @@ f.select_features_plsda <- function(feat_matrix, sel_factor, sel_colors, tune_co
 
 # ---------- PLS-DA CARET ----------
 f.select_features_plsda_caret <- function(feat_matrix, sel_factor, sel_colors, ncomp=10, quantile_threshold, plot_roc_filename=NULL) {
-	# Make factors readible by R
-	sel_factor <- as.factor(make.names(sel_factor))
-	
 	# Handle plotting
 	if (is.null(plot_roc_filename)) {
 		pdf(file=NULL)
@@ -930,9 +915,6 @@ f.select_features_opls <- function(feat_matrix, sel_factor, chosen_features) {
 
 # ---------- Random Forest ----------
 f.select_features_random_forest <- function(feat_matrix, sel_factor, sel_colors, tune_length, quantile_threshold, plot_roc_filename=NULL) {
-	# Make factors readible by R
-	sel_factor <- as.factor(make.names(sel_factor))
-	
 	# Handle plotting
 	if (is.null(plot_roc_filename)) {
 		pdf(file=NULL)
@@ -955,7 +937,7 @@ f.select_features_random_forest <- function(feat_matrix, sel_factor, sel_colors,
 	sel_rf[["_selected_variables_"]] <- unique(unlist(f.select_features_from_model(feat_list=feat_matrix, feat_class=sel_factor, model_varimp=imp_rf$importance, confidence=quantile_threshold, keepx_min=10)))
 	
 	# Performance measures
-	sel_rf <- do.call(c, list(sel_rf, f.performance_measures_caret(model=model_rf, sel_factor=sel_factor, sel_colors=sel_colors)))
+	# sel_rf <- do.call(c, list(sel_rf, f.performance_measures_caret(model=model_rf, sel_factor=sel_factor, sel_colors=sel_colors)))
 	
 	dev.off()
 	
@@ -966,9 +948,6 @@ f.select_features_random_forest <- function(feat_matrix, sel_factor, sel_colors,
 
 # ---------- Random Forest using Boruta selection method ----------
 f.select_features_random_forest_boruta <- function(feat_matrix, sel_factor, sel_colors, sel_method="best", tune_length=10, pvalue=0.05, mcAdj=TRUE, maxRuns=1000, plot_roc_filename=NULL) {
-	# Make factors readible by R
-	sel_factor <- as.factor(make.names(sel_factor))
-	
 	#library(Boruta)
 	#library(rpart)
 	
@@ -1011,7 +990,11 @@ f.select_features_random_forest_boruta <- function(feat_matrix, sel_factor, sel_
 		sel_boruta_rf[["_MAE_"]] <- caret::postResample(actual, predicted)[3]
 		
 		#sel_boruta <- c(sel_boruta, sel_boruta_rf)
+		print(sel_boruta_rf[["_MAE_"]])
+		print(sel_boruta_rf[["_RMSE_"]])
+		print(sel_boruta_rf[["_R2_"]])
 		return(sel_boruta_rf)
+		
 	}
 
 	# Save metrics
@@ -1213,7 +1196,7 @@ f.count.selected_features <- function(sel_feat) {
 
 
 # ---------- Draw heatmap of selected features ----------
-f.heatmap.selected_features <- function(feat_list, sel_feat, filename, main, scale="col") {
+f.heatmap.selected_features <- function(feat_list, sel_feat, filename, main) {
 	# Use existing dendrogram for rows
 	if (any(names(sel_feat) %in% '_dendrogram_row_')) {
 		print("Using existing dendrogram for clustering of rows.")
@@ -1252,12 +1235,12 @@ f.heatmap.selected_features <- function(feat_list, sel_feat, filename, main, sca
 	
 	# Draw heatmap
 	if (! is.null(filename)) pdf(file=as.character(filename), encoding="ISOLatin1", pointsize=10, width=8, height=8, family="Helvetica")
-	heatmap.2(x=as.matrix(sel_list), scale=scale, cexRow=0.6, cexCol=0.5, main=main,
+	heatmap.2(x=as.matrix(feat_list[, sel_boruta_rf$'_selected_variables_']), cexRow=0.6, cexCol=0.5, main=main, scale = c("none"), #messing with scaling here
 			  Rowv=rowv, offsetRow=0,
 			  Colv=colv, offsetCol=0,
-			  col=colorRampPalette(c('darkblue','white','darkred'), alpha=0.1, bias=1)(256),
+			  col=colorRampPalette(c('darkblue','white','darkred'), alpha=0.1, bias=1)(60), breaks = seq(-0.3,0.3,0.01), #messed with colours and breaks
 			  #trace="none", margins=c(2,4),
-			  trace="none", margins=c(max(nchar(colnames(feat_list)))/2, max(nchar(rownames(feat_list)))/3),
+			  trace="none", margins=c(max(nchar(colnames(feat_list)))/4, max(nchar(rownames(feat_list)))/3),
 			  key=TRUE, key.title="Color key", density.info='density', denscol="black")
 	if (! is.null(filename)) dev.off()
 }
@@ -1472,7 +1455,6 @@ f.export_maf <- function(peak_list, maf_filename) {
 							  smiles=character(l),
 							  inchi=character(l),
 							  metabolite_identification=character(l),
-							  xcms_identifier=rownames(peak_list),
 							  mass_to_charge=peak_list$mzmed,
 							  fragmentation=character(l),
 							  modifications=character(l),
@@ -1495,67 +1477,6 @@ f.export_maf <- function(peak_list, maf_filename) {
 	
 	# Export MAF
 	write.table(maf, file=maf_filename, row.names=FALSE, col.names=colnames(maf), quote=TRUE, sep="\t", na="\"\"")
-}
-
-
-
-# ---------- Update existing MAF with annotated compounds ----------
-f.annotate_maf_compounds <- function(maf_input, maf_output, polarity, xcms_id, pol_mode, smiles, names) {
-	# Import MAF
-	maf_out <- read.table(file=maf_input, quote="\"", sep="\t", na.strings="NA", header=TRUE, stringsAsFactors=TRUE)
-	maf_out[is.na(maf_out)] <- as.character("")
-	
-	maf_out$database_identifier <- as.character(maf_out$database_identifier)
-	maf_out$metabolite_identification <- as.character(maf_out$metabolite_identification)
-	
-	# Annotate compounds
-	for (i in c(1:length(xcms_id))) {
-		if (pol_mode[i] == polarity) {
-			j <- which(maf_out$xcms_identifier==xcms_id[i])
-			if (length(j) > 0) {
-				if (nchar(as.character(maf_out$database_identifier[j])) > 0) {
-					maf_out$database_identifier[j] <- paste(c(smiles[i], maf_out$database_identifier[j]), collapse='|')
-					maf_out$metabolite_identification[j] <- paste(c(names[i], maf_out$metabolite_identification[j]), collapse='|')
-				} else {
-					maf_out$database_identifier[j] <- paste(smiles[i], collapse='|')
-					maf_out$metabolite_identification[j] <- paste(names[i], collapse='|')
-				}
-			}
-		}
-	}
-	
-	# Remove non-standard columns "ms_level", "primary_class"
-	maf_out$ms_level <- NULL
-	maf_out$primary_class <- NULL
-	
-	# Export MAF
-	write.table(maf_out, file=maf_output, row.names=FALSE, col.names=colnames(maf_out), quote=TRUE, sep="\t", na="\"\"")
-}
-
-
-
-# ---------- Update existing MAF with annotated compounds ----------
-f.annotate_maf_classes <- function(maf_input, maf_output) {
-	# Read CHEMONT ontology
-	obo <- ontologyIndex::get_ontology(file=paste0("~/Desktop/Projekte/Habilitation/Mosses/ms-swath/data/ChemOnt_2_1.obo"), extract_tags="minimal")
-	
-	# Import MAF
-	maf_out <- read.table(file=maf_input, quote="\"", sep="\t", na.strings="NA", header=TRUE, stringsAsFactors=TRUE)
-	maf_out[is.na(maf_out)] <- as.character("")
-	
-	# Annotate classes
-	for (i in c(1:length(maf_out$xcms_identifier))) {
-		cl <- gsub(x=maf_out$primary_class[i], pattern='.*; ', replacement='')
-		id <- as.character(obo$id[which(as.character(obo$name) %in% as.character(cl))])
-		
-		if (nchar(cl) > 1) {
-			maf_out$database_identifier[i] <- paste(id, collapse='|')
-			maf_out$metabolite_identification[i] <- paste(cl, collapse='|')
-		}
-	}
-	
-	# Export MAF
-	write.table(maf_out, file=maf_output, row.names=FALSE, col.names=colnames(maf_out), quote=TRUE, sep="\t", na="\"\"")
 }
 
 
