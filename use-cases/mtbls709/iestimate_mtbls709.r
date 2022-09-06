@@ -551,9 +551,21 @@ if (SIRIUS_VERSION == 4) {
 	classifier_canopus_pos$alternative_classes <- classifier_canopus_pos$all.classifications
 }
 
+# Store primary class in ms1_def_pos
 for (j in unique(classifier_canopus_pos$Metabolite.name)) {
 	obj <- classifier_canopus_pos[classifier_canopus_pos$Metabolite.name %in% j, "Annotation..putative."]
 	ms1_def_pos[j, "primary_class"] <- obj[1]
+}
+
+# Build comp_list
+comp_list_pos <- feat_list_pos[, c(na.omit(rownames(ms1_def_pos)[ms1_def_pos$has_ms2==1]))]
+
+# Store identification in ms1_def_pos
+ms1_def_pos[, "identification"] <- ""
+for (i in 1:nrow(sirius_identification_pos)) {
+	if ((sirius_identification_pos$name[i] != "") & (sirius_identification_pos$name[i] != "null")) {
+		ms1_def_pos[gsub(x=sirius_identification_pos$id, pattern=".*?_", replacement="", perl=TRUE)[i], "identification"] <- sirius_identification_pos$name[i]
+	}
 }
 
 
@@ -844,6 +856,15 @@ sel_pls_pos <- f.select_features_pls(feat_matrix=feat_list_pos, sel_factor=as.fa
 print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
 f.heatmap.selected_features(feat_list=feat_list_pos, sel_feat=sel_pls_pos$`_selected_variables_`, sel_names=paste0("     ",sel_pls_pos$`_selected_variables_`), filename="plots/pos_ms1_select_pls.pdf", main="PLS", plot_width=6, plot_height=5, cex_col=0.5, cex_row=0.4)
 
+# PLS with comp_list
+sel_pls_pos <- f.select_features_pls(feat_matrix=comp_list_pos, sel_factor=as.factor(mzml_pheno_samples_pos), sel_colors=mzml_pheno_colors_pos, components=length(unique(mzml_pheno_samples_pos))-1, tune_length=10, quantile_threshold=0.982, plot_roc_filename="plots/pos_ms1_comp_select_pls_roc.pdf")
+print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
+sel_var_pos <- sel_pls_pos$`_selected_variables_`
+for (i in 1:length(sel_var_pos)) {
+	if (ms1_def_pos[sel_var_pos[i], "identification"] != "") sel_var_pos[i] <- ms1_def_pos[sel_var_pos[i], "identification"]
+	if (nchar(sel_var_pos[i]) > 20) sel_var_pos[i] <- substr(sel_var_pos[i], 1, 20)
+}
+f.heatmap.selected_features(feat_list=comp_list_pos, sel_feat=sel_pls_pos$`_selected_variables_`, sel_names=sel_var_pos, filename="plots/pos_ms1_comp_select_pls.pdf", main="PLS", plot_width=6, plot_height=5, cex_col=0.3, cex_row=0.4)
 
 
 

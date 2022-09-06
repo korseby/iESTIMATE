@@ -1,0 +1,138 @@
+---
+title: "Vignettes"
+author: "Kristian Peters"
+date: "09/09/2022"
+output: pdf_document
+---
+
+# CliMetabolomics workshop: Seasonal variations in the chemodiversity of two bryophytes
+
+## 5. Statistics at MS1 level
+
+### 5.1. Histogram
+
+```{r echo=TRUE}
+hist(as.numeric(feat_list_pos))
+```
+
+### 5.2. PCA
+
+```{r echo=TRUE}
+model_pca_pos <- prcomp(feat_list_pos)
+
+plot(model_pca_pos$x[, 1], model_pca_pos$x[,2], pch=19, main="PCA",
+	 xlab=paste0("PC1: ", format(summary(model_pca_pos)$importance[2, 2] * 100, digits=3), " % variance"),
+	 ylab=paste0("PC2: ", format(summary(model_pca_pos)$importance[2, 3] * 100, digits=3), " % variance"),
+	 col=mzml_pheno_colors_samples_pos, bg=mzml_pheno_colors_samples_pos, cex=2)
+grid()
+text(model_pca_pos$x[, 1], model_pca_pos$x[,2], labels=mzml_names_pos, col=mzml_pheno_colors_samples_pos, pos=3, cex=0.5)
+```
+
+### 5.3. Diversity measures
+
+Chemical richness
+
+```{r, echo=TRUE}
+boxplot(model_div_pos$features ~ mzml_pheno_samples_pos, col=mzml_pheno_colors_pos, names=NA, main="Number of features", xlab="treatment", ylab="number of features")
+text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[3]-(par("usr")[4]-par("usr")[3])/14, srt=-22.5, adj=0.5, labels=levels(mzml_pheno_samples_pos), xpd=TRUE, cex=0.9)
+div_tukey <- tukey.test(response=model_div_pos$features, term=as.factor(mzml_pheno_samples_pos))
+text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[4]+(par("usr")[4]-par("usr")[3])/40, adj=0.5, labels=div_tukey[,1], xpd=TRUE, cex=0.8)
+```
+
+### 5.4. Shannon diversity index
+
+```{r, echo=TRUE}
+boxplot(model_div_pos$shannon ~ mzml_pheno_samples_pos, col=mzml_pheno_colors_pos, names=NA, main="Shannon diversity (H\')", xlab="treatment", ylab="Shannon diversity index (H\')")
+text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[3]-(par("usr")[4]-par("usr")[3])/14, srt=-22.5, adj=0.5, labels=levels(mzml_pheno_samples_pos), xpd=TRUE, cex=0.9)
+div_tukey <- tukey.test(response=model_div_pos$shannon, term=as.factor(mzml_pheno_samples_pos))
+text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[4]+(par("usr")[4]-par("usr")[3])/40, adj=0.5, labels=div_tukey[,1], xpd=TRUE, cex=0.8)
+```
+
+### 5.5. Pielou's evenness index
+
+```{r, echo=TRUE}
+boxplot(model_div_pos$pielou ~ mzml_pheno_samples_pos, col=mzml_pheno_colors_pos, names=NA, main="Pielou\'s evenness", xlab="treatment", ylab="Pielou diversity index (J)")
+text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[3]-(par("usr")[4]-par("usr")[3])/14, srt=-22.5, adj=0.5, labels=levels(mzml_pheno_samples_pos), xpd=TRUE, cex=0.9)
+div_tukey <- tukey.test(response=model_div_pos$pielou, term=as.factor(mzml_pheno_samples_pos))
+text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[4]+(par("usr")[4]-par("usr")[3])/40, adj=0.5, labels=div_tukey[,1], xpd=TRUE, cex=0.8)
+```
+
+### 5.6. Variable Selection
+
+Selection of features using PLS
+
+```{r, echo=TRUE}
+# PLS
+sel_pls_pos <- f.select_features_pls(feat_matrix=feat_list_pos, sel_factor=as.factor(mzml_pheno_samples_pos), sel_colors=mzml_pheno_colors_pos, components=length(unique(mzml_pheno_samples_pos))-1, tune_length=10, quantile_threshold=0.982, plot_roc_filename=NULL)
+print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
+f.heatmap.selected_features(feat_list=feat_list_pos, sel_feat=sel_pls_pos$`_selected_variables_`, sel_names=paste0("     ",sel_pls_pos$`_selected_variables_`), filename=NULL, main="PLS", plot_width=6, plot_height=5, cex_col=0.5, cex_row=0.4)
+```
+
+Are we able to annotate some of these compounds? Let's use the SIRIUS compound identification data for that
+
+```{r, echo=TRUE}
+sel_pls_pos <- f.select_features_pls(feat_matrix=comp_list_pos, sel_factor=as.factor(mzml_pheno_samples_pos), sel_colors=mzml_pheno_colors_pos, components=length(unique(mzml_pheno_samples_pos))-1, tune_length=10, quantile_threshold=0.982, plot_roc_filename=NULL)
+print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
+sel_var_pos <- sel_pls_pos$`_selected_variables_`
+for (i in 1:length(sel_var_pos)) {
+	if (ms1_def_pos[sel_var_pos[i], "identification"] != "") sel_var_pos[i] <- ms1_def_pos[sel_var_pos[i], "identification"]
+	if (nchar(sel_var_pos[i]) > 20) sel_var_pos[i] <- substr(sel_var_pos[i], 1, 20)
+}
+f.heatmap.selected_features(feat_list=comp_list_pos, sel_feat=sel_pls_pos$`_selected_variables_`, sel_names=sel_var_pos, filename=NULL, main="PLS", plot_width=6, plot_height=5, cex_col=0.3, cex_row=0.4)
+```
+
+## 6. Statistics at MS2 level
+
+### 6.1. Histogram
+
+```{r, echo=TRUE}
+hist(as.numeric(unlist(class_list_pos)), main="Histogram", xlab="class_list")
+```
+
+### 6.2. PCA
+
+```{r, echo=TRUE}
+model_pca_pos <- prcomp(class_list_pos)
+
+plot(model_pca_pos$x[, 1], model_pca_pos$x[, 2], pch=19, main="PCA",
+	 xlab=paste0("PC2: ", format(summary(model_pca_pos)$importance[2, 1] * 100, digits=3), " % variance"),
+	 ylab=paste0("PC3: ", format(summary(model_pca_pos)$importance[2, 2] * 100, digits=3), " % variance"),
+	 col=mzml_pheno_colors_samples_pos, bg=mzml_pheno_colors_samples_pos, cex=2)
+grid()
+text(model_pca_pos$x[, 1], model_pca_pos$x[, 2], labels=mzml_names_pos, col=mzml_pheno_colors_samples_pos, pos=3, cex=0.5)
+```
+
+### 6.6. Variable selection
+
+Selection of compound classes using PLS
+
+```{r, echo=TRUE}
+# PLS
+sel_pls_pos <- f.select_features_pls(feat_matrix=class_list_pos, sel_factor=mzml_pheno_samples_pos, sel_colors=mzml_pheno_colors_pos, components=length(unique(mzml_pheno_samples_pos))-1, tune_length=10, quantile_threshold=0.9, plot_roc_filename=NULL)
+print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
+f.heatmap.selected_features(feat_list=class_list_pos, sel_feat=sel_pls_pos$`_selected_variables_`, sel_names=paste0("     ",sel_pls_pos$`_selected_variables_`), filename=NULL, main="PLS", plot_width=6, plot_height=5, cex_col=0.5, cex_row=0.4)
+```
+
+## 7. Statistics at MS2 level (Superclass level)
+
+### 7.1. PCA
+
+```{r, echo=TRUE}
+model_pca_pos <- prcomp(superclass_list_pos)
+
+plot(model_pca_pos$x[, 1], model_pca_pos$x[, 2], pch=19, main="PCA",
+	 xlab=paste0("PC2: ", format(summary(model_pca_pos)$importance[2, 1] * 100, digits=3), " % variance"),
+	 ylab=paste0("PC3: ", format(summary(model_pca_pos)$importance[2, 2] * 100, digits=3), " % variance"),
+	 col=mzml_pheno_colors_samples_pos, bg=mzml_pheno_colors_samples_pos, cex=2)
+grid()
+text(model_pca_pos$x[, 1], model_pca_pos$x[, 2], labels=mzml_names_pos, col=mzml_pheno_colors_samples_pos, pos=3, cex=0.5)
+```
+
+### 7.2. Variable selection
+
+```{r, echo=TRUE}
+# PLS
+sel_pls_pos <- f.select_features_pls(feat_matrix=superclass_list_pos, sel_factor=mzml_pheno_samples_pos, sel_colors=mzml_pheno_colors_pos, components=length(unique(mzml_pheno_samples_pos))-1, tune_length=10, quantile_threshold=0.95, plot_roc_filename=NULL)
+print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
+f.heatmap.selected_features(feat_list=superclass_list_pos, sel_feat=sel_pls_pos$`_selected_variables_`, filename=NULL, main="PLS", plot_width=6, plot_height=5, cex_col=0.5, cex_row=0.4)
+```
