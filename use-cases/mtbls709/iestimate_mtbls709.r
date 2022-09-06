@@ -146,20 +146,20 @@ mzml_files_pos <- list.files(mzml_dir, pattern="*.mzML", recursive=T, full.names
 mzml_files_pos <- mzml_files_pos[grep(pol, mzml_files_pos, invert=FALSE)]
 mzml_files_pos <- mzml_files_pos[grep("MM8", mzml_files_pos, invert=TRUE)]
 
-# #VAR# Species only from summer
-mzml_files_pos <- mzml_files_pos[grep("summer", mzml_files_pos, invert=FALSE)]
+# Let's focus on one species
+mzml_files_pos <- mzml_files_pos[grep("Marpol", mzml_files_pos, invert=FALSE, perl=TRUE)]
 
 # Basenames of files without path and without extension
 mzml_names_pos <- gsub('(.*)\\..*', '\\1', gsub('( |-|,)', '.', basename(mzml_files_pos)))
 
 # Create phenodata based on species
 mzml_pheno_pos <- as.factor(sapply(strsplit(as.character(mzml_names_pos), "_"), function(x) {
-	nam <- x[4];
+	nam <- x[3];
 	nam;
 }))
 mzml_pheno_pos <- data.frame(sample_name=mzml_pheno_pos, sample_group=mzml_pheno_pos)
 mzml_pheno_samples_pos <- as.factor(mzml_pheno_pos$sample_group)
-mzml_pheno_colors_pos <- c("yellowgreen", "mediumseagreen", "darkorange1", "firebrick3", "darkolivegreen4", "dodgerblue4", "chocolate", "darkviolet", "darkkhaki")
+mzml_pheno_colors_pos <- c("firebrick3", "chartreuse3", "darkgoldenrod3", "deepskyblue3")
 mzml_pheno_colors_samples_pos <- sapply(mzml_pheno_samples_pos, function(x) { x <- mzml_pheno_colors_pos[which(x==levels(mzml_pheno_samples_pos))] } )
 
 # Save timestamps of samples
@@ -898,7 +898,7 @@ print(paste("Number of selected features:", f.count.selected_features(sel_feat=s
 f.heatmap.selected_features(feat_list=class_list_pos, sel_feat=sel_rf_pos$`_selected_variables_`, sel_names=paste0("     ",sel_rf_pos$`_selected_variables_`), filename="plots/pos_ms2_classes_select_rf.pdf", main="Random Forest", plot_width=6, plot_height=5, cex_col=0.5, cex_row=0.4)
 
 # PLS
-sel_pls_pos <- f.select_features_pls(feat_matrix=class_list_pos, sel_factor=mzml_pheno_samples_pos, sel_colors=mzml_pheno_colors_pos, components=2, tune_length=10, quantile_threshold=0.9, plot_roc_filename="plots/pos_ms2_classes_select_pls_roc.pdf")
+sel_pls_pos <- f.select_features_pls(feat_matrix=class_list_pos, sel_factor=mzml_pheno_samples_pos, sel_colors=mzml_pheno_colors_pos, components=length(unique(mzml_pheno_samples_pos))-1, tune_length=10, quantile_threshold=0.9, plot_roc_filename="plots/pos_ms2_classes_select_pls_roc.pdf")
 print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
 f.heatmap.selected_features(feat_list=class_list_pos, sel_feat=sel_pls_pos$`_selected_variables_`, sel_names=paste0("     ",sel_pls_pos$`_selected_variables_`), filename="plots/pos_ms2_classes_select_pls.pdf", main="PLS", plot_width=6, plot_height=5, cex_col=0.5, cex_row=0.4)
 
@@ -956,7 +956,7 @@ print(paste("Number of selected features:", f.count.selected_features(sel_feat=s
 f.heatmap.selected_features(feat_list=superclass_list_pos, sel_feat=sel_rf_pos$`_selected_variables_`, filename="plots/pos_ms2_superclasses_select_rf.pdf", main="Random Forest", plot_width=6, plot_height=5, cex_col=0.5, cex_row=0.4)
 
 # PLS
-sel_pls_pos <- f.select_features_pls(feat_matrix=superclass_list_pos, sel_factor=mzml_pheno_samples_pos, sel_colors=mzml_pheno_colors_pos, components=2, tune_length=10, quantile_threshold=0.95, plot_roc_filename="plots/pos_ms2_superclasses_select_pls_roc.pdf")
+sel_pls_pos <- f.select_features_pls(feat_matrix=superclass_list_pos, sel_factor=mzml_pheno_samples_pos, sel_colors=mzml_pheno_colors_pos, components=length(unique(mzml_pheno_samples_pos))-1, tune_length=10, quantile_threshold=0.95, plot_roc_filename="plots/pos_ms2_superclasses_select_pls_roc.pdf")
 print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
 f.heatmap.selected_features(feat_list=superclass_list_pos, sel_feat=sel_pls_pos$`_selected_variables_`, filename="plots/pos_ms2_superclasses_select_pls.pdf", main="PLS", plot_width=6, plot_height=5, cex_col=0.5, cex_row=0.4)
 
