@@ -5,7 +5,7 @@ date: "09/09/2022"
 output: pdf_document
 ---
 
-# CliMetabolomics workshop: Seasonal variations in the chemodiversity of two bryophytes
+# CliMetabolomics workshop: Seasonal variations in the chemodiversity of Marchantia polymorpha
 
 ## 1. Preparations
 
@@ -97,7 +97,8 @@ SIRIUS_VERSION <- 5
 Load RData object containing prepared data objects
 
 ```{r setup, echo=TRUE}
-load("r_data.rData")
+#load("r_data.rData")
+load(url("https://github.com/ipb-halle/iESTIMATE/blob/main/use-cases/mtbls709/iestimate_mtbls709.RData?raw=true"))
 ```
 
 Load iESTIMATE functions

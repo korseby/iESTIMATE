@@ -2,22 +2,65 @@
 title: "Vignettes"
 author: "Kristian Peters"
 date: "09/09/2022"
-output: pdf_document
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
 ---
 
-# CliMetabolomics workshop: Seasonal variations in the chemodiversity of two bryophytes
+# CliMetabolomics workshop: Seasonal variations in the chemodiversity of Marchantia polymorpha
+
+Load RData object containing prepared data objects
+
+```{r setup, echo=TRUE, message=FALSE, warning=FALSE}
+load(url("https://github.com/ipb-halle/iESTIMATE/blob/main/use-cases/mtbls709/iestimate_mtbls709.RData?raw=true"))
+library(parallel)               # Detect number of cpu cores
+library(foreach)                # For multicore parallel
+library(doMC)                   # For multicore parallel
+library(RColorBrewer)           # For colors
+library(multtest)               # For diffreport
+library(MSnbase)                # MS features
+library(xcms)                   # Swiss army knife for metabolomics
+library(CAMERA)                 # Metabolite Profile Annotation
+library(Spectra)                # Spectra package needed for XCMS3
+library(mixOmics)               # Statistics for various Omics
+# ERROR: vegan conflicts with mda and klaR, unload packages before using any of the analyses !!!
+if ("package:mda" %in% search()) detach(package:mda, unload=TRUE)
+if ("package:klaR" %in% search()) detach(package:klaR, unload=TRUE)
+library(vegan)
+library(multcomp)               # For Tukey test
+library(Hmisc)                  # For correlation test
+library(gplots)                 # For fancy heatmaps
+library(lme4)                   # Linear Models with Random Effects
+library(lmerTest)               # Create p-values for LMER
+library(ape)                    # Phylogeny
+library(pvclust)                # Phylogeny
+library(dendextend)             # Phylogeny
+library(cba)                    # Phylogeny
+library(phangorn)               # Phylogeny
+library(ontologyIndex)          # Reading obo ontology files
+library(webchem)                # Converting InChI to InChIKey
+library(circlize)               # For sunburst plot
+library(plotrix)                # For sunburst plot
+library(Boruta)                 # Random-Forest BORUTA
+library(rpart)                  # Regression trees
+library(caret)                  # Swiss-army knife for statistics
+library(pROC)                   # Evaluation metrics
+library(PRROC)                  # Evaluation metrics
+library(multiROC)               # Evaluation metrics
+```
 
 ## 5. Statistics at MS1 level
 
 ### 5.1. Histogram
 
-```{r echo=TRUE}
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 hist(as.numeric(feat_list_pos))
 ```
 
 ### 5.2. PCA
 
-```{r echo=TRUE}
+```{r echo=TRUE, message=FALSE, warning=FALSE}
 model_pca_pos <- prcomp(feat_list_pos)
 
 plot(model_pca_pos$x[, 1], model_pca_pos$x[,2], pch=19, main="PCA",
@@ -32,7 +75,7 @@ text(model_pca_pos$x[, 1], model_pca_pos$x[,2], labels=mzml_names_pos, col=mzml_
 
 Chemical richness
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 boxplot(model_div_pos$features ~ mzml_pheno_samples_pos, col=mzml_pheno_colors_pos, names=NA, main="Number of features", xlab="treatment", ylab="number of features")
 text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[3]-(par("usr")[4]-par("usr")[3])/14, srt=-22.5, adj=0.5, labels=levels(mzml_pheno_samples_pos), xpd=TRUE, cex=0.9)
 div_tukey <- tukey.test(response=model_div_pos$features, term=as.factor(mzml_pheno_samples_pos))
@@ -41,7 +84,7 @@ text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[4]+(par("usr")[4]-par(
 
 ### 5.4. Shannon diversity index
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 boxplot(model_div_pos$shannon ~ mzml_pheno_samples_pos, col=mzml_pheno_colors_pos, names=NA, main="Shannon diversity (H\')", xlab="treatment", ylab="Shannon diversity index (H\')")
 text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[3]-(par("usr")[4]-par("usr")[3])/14, srt=-22.5, adj=0.5, labels=levels(mzml_pheno_samples_pos), xpd=TRUE, cex=0.9)
 div_tukey <- tukey.test(response=model_div_pos$shannon, term=as.factor(mzml_pheno_samples_pos))
@@ -50,7 +93,7 @@ text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[4]+(par("usr")[4]-par(
 
 ### 5.5. Pielou's evenness index
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 boxplot(model_div_pos$pielou ~ mzml_pheno_samples_pos, col=mzml_pheno_colors_pos, names=NA, main="Pielou\'s evenness", xlab="treatment", ylab="Pielou diversity index (J)")
 text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[3]-(par("usr")[4]-par("usr")[3])/14, srt=-22.5, adj=0.5, labels=levels(mzml_pheno_samples_pos), xpd=TRUE, cex=0.9)
 div_tukey <- tukey.test(response=model_div_pos$pielou, term=as.factor(mzml_pheno_samples_pos))
@@ -61,7 +104,7 @@ text(1:length(unique(mzml_pheno_samples_pos)), par("usr")[4]+(par("usr")[4]-par(
 
 Selection of features using PLS
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 # PLS
 sel_pls_pos <- f.select_features_pls(feat_matrix=feat_list_pos, sel_factor=as.factor(mzml_pheno_samples_pos), sel_colors=mzml_pheno_colors_pos, components=length(unique(mzml_pheno_samples_pos))-1, tune_length=10, quantile_threshold=0.982, plot_roc_filename=NULL)
 print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
@@ -70,7 +113,7 @@ f.heatmap.selected_features(feat_list=feat_list_pos, sel_feat=sel_pls_pos$`_sele
 
 Are we able to annotate some of these compounds? Let's use the SIRIUS compound identification data for that
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 sel_pls_pos <- f.select_features_pls(feat_matrix=comp_list_pos, sel_factor=as.factor(mzml_pheno_samples_pos), sel_colors=mzml_pheno_colors_pos, components=length(unique(mzml_pheno_samples_pos))-1, tune_length=10, quantile_threshold=0.982, plot_roc_filename=NULL)
 print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
 sel_var_pos <- sel_pls_pos$`_selected_variables_`
@@ -85,13 +128,13 @@ f.heatmap.selected_features(feat_list=comp_list_pos, sel_feat=sel_pls_pos$`_sele
 
 ### 6.1. Histogram
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 hist(as.numeric(unlist(class_list_pos)), main="Histogram", xlab="class_list")
 ```
 
 ### 6.2. PCA
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 model_pca_pos <- prcomp(class_list_pos)
 
 plot(model_pca_pos$x[, 1], model_pca_pos$x[, 2], pch=19, main="PCA",
@@ -106,7 +149,7 @@ text(model_pca_pos$x[, 1], model_pca_pos$x[, 2], labels=mzml_names_pos, col=mzml
 
 Selection of compound classes using PLS
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 # PLS
 sel_pls_pos <- f.select_features_pls(feat_matrix=class_list_pos, sel_factor=mzml_pheno_samples_pos, sel_colors=mzml_pheno_colors_pos, components=length(unique(mzml_pheno_samples_pos))-1, tune_length=10, quantile_threshold=0.9, plot_roc_filename=NULL)
 print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
@@ -117,7 +160,7 @@ f.heatmap.selected_features(feat_list=class_list_pos, sel_feat=sel_pls_pos$`_sel
 
 ### 7.1. PCA
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 model_pca_pos <- prcomp(superclass_list_pos)
 
 plot(model_pca_pos$x[, 1], model_pca_pos$x[, 2], pch=19, main="PCA",
@@ -130,7 +173,7 @@ text(model_pca_pos$x[, 1], model_pca_pos$x[, 2], labels=mzml_names_pos, col=mzml
 
 ### 7.2. Variable selection
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 # PLS
 sel_pls_pos <- f.select_features_pls(feat_matrix=superclass_list_pos, sel_factor=mzml_pheno_samples_pos, sel_colors=mzml_pheno_colors_pos, components=length(unique(mzml_pheno_samples_pos))-1, tune_length=10, quantile_threshold=0.95, plot_roc_filename=NULL)
 print(paste("Number of selected features:", f.count.selected_features(sel_feat=sel_pls_pos$`_selected_variables_`)))
