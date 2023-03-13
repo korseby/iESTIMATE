@@ -1,0 +1,14 @@
+Package: iESTIMATE
+Title: Identifying ESsenTIal Molecular vAriables in Terrestrial Ecology
+Version: 0.1.0
+Authors@R: 
+    person("Kristian", "Peters", , "kpeters@ipb-halle.de", role = c("aut", "cre"),
+           comment = c(ORCID="0000-0002-4321-0257"))
+Depends: vegan (>= 2.6), multcomp (>= 1.4), R (>= 4.2.0)
+Suggests: parallel
+Imports: MASS, stats
+Description: Predict functional molecular traits and select the essential molecular variables in ecometabolomics (LC-MS, GC-MS) data.
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown=TRUE)
+RoxygenNote: 7.2.3
